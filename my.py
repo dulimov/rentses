@@ -30,17 +30,20 @@ from wtforms import Field
 from flask_admin.form import RenderTemplateWidget
 
 
+
+
+
 # Замена MySQLdb на pymysql
 pymysql.install_as_MySQLdb()
 
 # Создание экземпляра приложения Flask
-app = Flask(__name__, template_folder='www/templates')
+app = Flask(__name__, template_folder='www/carent.es/templates')
 app = Flask(__name__, static_url_path='/', static_folder='static')
 
 
 # Установка конфигурации соединения с базой данных
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://ca92Rcpwb@localhost/care_es'
-app.config['SECRET_KEY'] = 'dwddfdsf4eed'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://carent_es:SeDw7WeF992Rcpwb@localhost/carent_es'
+app.config['SECRET_KEY'] = 'dwdw44dfdsf4eed'
 
 babel = Babel(app)
 mail = Mail(app)
@@ -48,6 +51,7 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager()
 login_manager.init_app(app)
+
 
  
 # Определение модели User
@@ -102,6 +106,8 @@ class MultiImageField(BaseField):
     def __call__(self, **kwargs):
         return self.widget(**kwargs)     
         
+
+
 def create_view(self, cls, *args, **kwargs):
     self._template_args['form'] = self.create_form()
     if self.inline_models:
@@ -119,34 +125,12 @@ class MyModelView(ModelView):
         # Ваша логика
         return super(MyModelView, self).create_view(**kwargs)
 
-class News(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title_ru = db.Column(db.String(100))
-    title_en = db.Column(db.String(100))
-    title_es = db.Column(db.String(100))
-    content_ru = db.Column(db.Text)
-    content_en = db.Column(db.Text)
-    content_es = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Page(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    slug = db.Column(db.String(100), unique=True)
-    title_ru = db.Column(db.String(100))
-    title_en = db.Column(db.String(100))
-    title_es = db.Column(db.String(100))
-    content_ru = db.Column(db.Text)
-    content_en = db.Column(db.Text)
-    content_es = db.Column(db.Text)
-    
 
-                    
+       
 
 class Car(db.Model): 
     id = db.Column(db.Integer, primary_key=True)
-    city = db.relationship('City')
-    owner = db.relationship('Partner', backref='cars')
-    city_id = db.Column(db.Integer, db.ForeignKey('city.id'))
     name = db.Column(db.String(100))
     url = db.Column(db.String(100))
     brand = db.Column(db.String(50))
@@ -207,7 +191,7 @@ class Car(db.Model):
     occupied_until = db.Column(db.DateTime)
     occupied_days_ahead = db.Column(db.Integer)
     additional_cities = db.Column(db.Text)  # Список дополнительных городов в виде строки или JSON
-    owner_id = db.Column(db.Integer, db.ForeignKey('partner.id')) 
+
     
 
 class ImageForm(FlaskForm):
@@ -220,13 +204,13 @@ class CarImage(db.Model):
     image_url = db.Column(db.String(100))
                             
 class CarView(ModelView):
-    form_columns = ['city', 'name', 'url', 'brand', 'model', 'drive', 'car_class', 'fuel_type', 'country', 'transmission', 'color', 'seats', 'state_number',
+    form_columns = ['name', 'url', 'brand', 'model', 'drive', 'car_class', 'fuel_type', 'country', 'transmission', 'color', 'seats', 'state_number',
         'engine_volume', 'horsepower', 'gearbox_type', 'max_speed', 'fuel_consumption', 'dimensions', 'fuel_brand', 'fuel_tank_volume', 'trunk_volume', 'year', 'mileage',
         'interior', 'has_air_conditioning', 'has_tinting', 'color_description', 'vin', 'registration_certificate', 'short_description', 'detailed_description', 'primary_image', 'images', 'price_1_day',
         'price_2_5_days', 'price_6_15_days', 'price_16_29_days', 'price_30_days', 'with_driver', 'driver_price_3_hours', 'driver_price_3_6_hours', 'driver_price_7_12_hours',
         'driver_price_13_hours', 'purchase_price', 'deposit', 'meta_title', 'meta_keywords', 'meta_description', 
         'is_hidden', 'is_not_counted', 'is_not_rented', 'is_in_repair', 'no_contract_print',  
-        'is_not_shown_to_customers', 'always_occupied', 'occupied_until',  'occupied_days_ahead', 'owner_id', 'owner', 'additional_cities' ]
+        'is_not_shown_to_customers', 'always_occupied', 'occupied_until',  'occupied_days_ahead', 'additional_cities' ]
     form_extra_fields = {
         'primary_image': ImageUploadField('Основное изображение',
                                           base_path='/path/to/images/',
@@ -236,7 +220,6 @@ class CarView(ModelView):
     form_overrides = {
     'images': MultiImageField() # экземпляр класса без cls
 }
-
     
 def on_model_change(self, form, model, is_created):
     try:
@@ -269,7 +252,6 @@ def on_model_change(self, form, model, is_created):
         raise e  
             
 class CarForm(FlaskForm):
-    city = SelectField('Город', choices=[('city1', 'Город 1'), ('city2', 'Город 2')])
     name = StringField('Название', validators=[DataRequired()])
     url = StringField('URL')
     primary_image = FileField('Основное изображение', validators=[
@@ -285,39 +267,13 @@ class StatusEnum(enum.Enum):
     completed = 'Завершен'
     cancelled = 'Отменен'
 
-class Order(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    start_date = db.Column(db.DateTime, default=datetime.utcnow)
-    end_date = db.Column(db.DateTime)
-    car_id = db.Column(db.Integer, db.ForeignKey('car.id'), nullable=False)    
-    auto = db.Column(db.String(80))
-    client_name = db.Column(db.String(100))
-    phone = db.Column(db.String(50))
-    status = db.Column(db.Enum(StatusEnum))
-    customer_name = db.Column(db.String(100), nullable=False)
-    customer_phone = db.Column(db.String(20), nullable=False)
-    customer_email = db.Column(db.String(100), nullable=True) 
-
-
-    def __str__(self):
-        return f'Заказ №{self.id} на имя {self.client_name}'
-
-
-class OrderView(ModelView):
-    column_list = ('id', 'start_date', 'end_date', 'auto', 'client_name', 'phone', 'status')
-    form_columns = ('start_date', 'end_date', 'auto', 'client_name', 'phone', 'status')
-
+## конец настройки авто
 
   
 # Добавление представления модели User в админ-панель
 admin.add_view(UserView(User, db.session))
-admin.add_view(ModelView(News, db.session))
-admin.add_view(ModelView(Page, db.session))
-
-admin.add_view(CityView(City, db.session, name='Города'))
-admin.add_view(PartnerView(Partner, db.session, name='Партнеры'))
 admin.add_view(CarView(Car, db.session, name='Автомобили'))
-admin.add_view(OrderView(Order, db.session))
+
 
 
 
@@ -348,7 +304,19 @@ def show_page(slug):
     except Exception as e:
         app.logger.error(f'Error loading page with slug {slug}: {e}')
         raise e  # Это вызовет стандартную страницу ошибки Flask
-  
+
+
+    
+@app.route('/catalog')
+def catalog():
+    return render_template('catalog.html', name="catalog")
+    
+@app.route('/news')
+def show_news():
+    news_items = News.query.order_by(News.created_at.desc()).all()
+    return render_template('news.html', news=news_items)
+    
+   
           
 @app.errorhandler(404)
 def page_not_found(e):
@@ -360,17 +328,9 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 # Маршруты Flask
 
-@app.route('/set_language', methods=['POST'])
-def set_language():
-    language = request.form['language']
-    response = make_response(redirect(url_for('index')))
-    response.set_cookie('language', language)
-    return response
     
 @app.route('/')
 def index():
-    # Получение списка городов из базы данных
-    cities = City.query.all()
 
     # Получение списка автомобилей (если это необходимо)
     cars = Car.query.all()
@@ -412,16 +372,6 @@ def filter_results():
     return render_template('cars.html', cars=cars)    
 
 
-
-@app.route('/order', methods=['GET', 'POST'])
-def create_order():
-    if request.method == 'POST':
-        # здесь будет код для создания заказа на основе данных формы
-        # например, создание экземпляра Order и сохранение в базе данных
-        # не забудьте про валидацию и обработку ошибок
-        pass
-    # Если метод GET, показываем форму заказа
-    return render_template('order_form.html')
 
 @app.route('/admin/orders')
 @login_required
